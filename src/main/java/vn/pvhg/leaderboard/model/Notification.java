@@ -26,7 +26,35 @@ public class Notification {
     @Column(columnDefinition = "TEXT")
     private String message;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NotificationType notificationType;
+
+    private String link;
+
+    @Column(nullable = false)
+    private boolean isRead = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NotificationPriority priority = NotificationPriority.NORMAL;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column
+    private LocalDateTime expirationDate;
+
+    public enum NotificationType {
+        SUBMISSION_APPROVED,
+        SUBMISSION_REJECTED,
+        NEW_RANKING,
+        SYSTEM_MESSAGE;
+    }
+
+    public enum NotificationPriority {
+        LOW, NORMAL, HIGH, CRITICAL
+    }
+
 }
