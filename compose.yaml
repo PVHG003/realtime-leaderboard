@@ -1,26 +1,26 @@
 services:
-  app:
-    container_name: speedrunning-leaderboard-app
-    build: ./
-    depends_on:
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    ports:
-      - "8080:8080"
-    env_file:
-      - .env
-    environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      SPRING_REDIS_HOST: ${SPRING_REDIS_HOST}
-      SPRING_REDIS_PORT: ${SPRING_REDIS_PORT}
-    networks:
-      - backend
-    volumes:
-      - ./src:/app/cached
+#  app:
+#    container_name: speedrunning-leaderboard-app
+#    build: ./
+#    depends_on:
+#      redis:
+#        condition: service_healthy
+#      postgres:
+#        condition: service_healthy
+#    ports:
+#      - "8080:8080"
+#    env_file:
+#      - .env
+#    environment:
+#      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+#      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+#      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+#      SPRING_REDIS_HOST: ${SPRING_REDIS_HOST}
+#      SPRING_REDIS_PORT: ${SPRING_REDIS_PORT}
+#    networks:
+#      - backend
+#    volumes:
+#      - ./src:/app/cached
 
   redis:
     image: redis:alpine
