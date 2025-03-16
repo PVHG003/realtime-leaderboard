@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -24,5 +25,5 @@ public class Category {
     private String categoryType;
 
     @ManyToMany(mappedBy = "categories", fetch = FetchType.LAZY)
-    private Set<Game> game;
+    private List<Game> game;
 }

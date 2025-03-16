@@ -15,6 +15,7 @@ import vn.pvhg.leaderboard.repo.UserRepo;
 import vn.pvhg.leaderboard.util.JwtUtil;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -56,7 +57,7 @@ public class AuthService {
                 .username(request.username())
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
-                .roles(Set.of(role))
+                .roles(List.of(role))
                 .build();
 
         userRepo.save(user);

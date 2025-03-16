@@ -3,6 +3,7 @@ package vn.pvhg.leaderboard.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
 import java.util.Set;
 
 
@@ -24,5 +25,5 @@ public class Platform {
     private String platformType;
 
     @ManyToMany(mappedBy = "platforms", fetch = FetchType.LAZY)
-    private Set<Game> games;
+    private List<Game> games;
 }

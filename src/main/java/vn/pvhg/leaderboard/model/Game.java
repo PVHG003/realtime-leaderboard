@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -35,7 +36,7 @@ public class Game {
             joinColumns = @JoinColumn(name = "game_id"),
             inverseJoinColumns = @JoinColumn(name = "platform_id")
     )
-    private Set<Platform> platforms;
+    private List<Platform> platforms;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -43,7 +44,7 @@ public class Game {
             joinColumns = @JoinColumn(name = "game_id"),
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    private Set<Category> categories;
+    private List<Category> categories;
 
 
     @CreationTimestamp
