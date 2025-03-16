@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 
+import java.io.Serializable;
+
 @Entity
 @Table(name = "roles")
 @Builder
@@ -11,7 +13,7 @@ import org.springframework.security.core.GrantedAuthority;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Role {
+public class Role implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -19,6 +21,10 @@ public class Role {
     @Enumerated(EnumType.STRING)
     @Column(unique = true, nullable = false)
     private RoleType roleName;
+
+    public String getAuthority() {
+        return roleName.name();
+    }
 
     @Getter
     @RequiredArgsConstructor

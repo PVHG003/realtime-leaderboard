@@ -2,22 +2,24 @@ package vn.pvhg.leaderboard.util;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 import vn.pvhg.leaderboard.model.User;
 import vn.pvhg.leaderboard.repo.UserRepo;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
 public class JwtUtil {
-    private static final String REFRESH_TOKEN_KEY = "valid";
-
+    private static final String REFRESH_TOKEN_PREFIX = "refresh:";
     private final long jwtAccessExpirationTime;
     private final long jwtRefreshExpirationTime;
     private final JwtEncoder jwtEncoder;
@@ -39,26 +41,28 @@ public class JwtUtil {
     }
 
     public String generateToken(User user) {
-        return generateToken(user.getUsername(), user.getRoles().stream()
-                .map(role -> role.getRoleName().getAuthority())
-                .collect(Collectors.toSet()));
+        return generateToken(user.getId(),
+                user.getRoles().stream()
+                        .map(role -> role.getRoleName().getAuthority())
+                        .collect(Collectors.toSet()));
     }
 
-    public String generateToken(String username) {
-        User user = userRepo.findByUsername(username).orElseThrow(
-                () -> new UsernameNotFoundException("Username " + username + " not found"));
+    public String generateToken(UUID id) {
+        User user = userRepo.findById(id).orElseThrow(
+                () -> new UsernameNotFoundException("Username " + id + " not found"));
         return generateToken(user);
     }
 
-    private String generateToken(String username, Set<String> authorities) {
+    private String generateToken(UUID id, Set<String> authorities) {
         Instant now = Instant.now();
 
         JwtClaimsSet claimsSet = JwtClaimsSet.builder()
                 .issuer("leaderboard-app")
                 .issuedAt(now)
                 .expiresAt(now.plusMillis(jwtAccessExpirationTime))
-                .subject(username)
+                .subject(id.toString())
                 .claim("roles", authorities)
+                .claim("type", "access")
                 .build();
 
         return jwtEncoder.encode(JwtEncoderParameters.from(claimsSet)).getTokenValue();
@@ -68,15 +72,16 @@ public class JwtUtil {
         Instant now = Instant.now();
 
         JwtClaimsSet claimsSet = JwtClaimsSet.builder()
-                .issuer("leaderboard-app")
+                .issuer("http://leaderboard-app/api/auth")
                 .issuedAt(now)
                 .expiresAt(now.plusMillis(jwtRefreshExpirationTime))
-                .subject(user.getUsername())
+                .subject(user.getId().toString())
+                .claim("type", "refresh")
                 .build();
 
         String refreshToken = jwtEncoder.encode(JwtEncoderParameters.from(claimsSet)).getTokenValue();
 
-        redisTemplate.opsForValue().set(refreshToken, REFRESH_TOKEN_KEY, jwtRefreshExpirationTime, TimeUnit.MILLISECONDS);
+        storeRefreshToken(user.getId(), refreshToken, jwtRefreshExpirationTime);
 
         return refreshToken;
     }
@@ -85,35 +90,27 @@ public class JwtUtil {
         try {
             Jwt decodedToken = jwtDecoder.decode(token);
             return JwtClaimsSet.builder()
-                    .issuer(decodedToken.getIssuer().toString())
+                    .issuer(String.valueOf(decodedToken.getIssuer()))
                     .issuedAt(Objects.requireNonNull(decodedToken.getIssuedAt()))
                     .expiresAt(Objects.requireNonNull(decodedToken.getExpiresAt()))
                     .subject(decodedToken.getSubject())
                     .claims(claims -> claims.putAll(decodedToken.getClaims()))
                     .build();
         } catch (JwtException e) {
-            throw new RuntimeException("Invalid token", e);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token", e);
         }
     }
 
-    public String refreshAccessToken(String refreshToken) {
-        try {
-            if (redisTemplate.opsForValue().get(refreshToken) == null) {
-                throw new JwtException("Refresh token is invalid or expired");
-            }
-
-            JwtClaimsSet refreshTokenClaims = decodeToken(refreshToken);
-            String username = refreshTokenClaims.getSubject();
-
-            if (refreshTokenClaims.getExpiresAt().isBefore(Instant.now())) {
-                throw new JwtException("Refresh token has expired");
-            }
-
-            redisTemplate.delete(refreshToken);
-
-            return generateToken(username);
-        } catch (JwtException e) {
-            throw new RuntimeException("Invalid refresh token", e);
-        }
+    public void storeRefreshToken(UUID userId, String refreshToken, long expirationTime) {
+        redisTemplate.opsForValue().set(REFRESH_TOKEN_PREFIX + userId, refreshToken, Duration.ofMillis(expirationTime));
     }
+
+    public String getRefreshToken(UUID userId) {
+        return (String) redisTemplate.opsForValue().get(REFRESH_TOKEN_PREFIX + userId);
+    }
+
+    public void deleteRefreshToken(UUID userId) {
+        redisTemplate.delete(REFRESH_TOKEN_PREFIX + userId);
+    }
+
 }
