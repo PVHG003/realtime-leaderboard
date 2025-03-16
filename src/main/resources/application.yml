@@ -27,14 +27,13 @@ spring:
   sql:
     init:
       mode: always
-      data-locations: classpath:init-data/init-role.db
+      data-locations: classpath:init-data/init-role.sql
       continue-on-error: true
 
 
 jwt:
   public-key: classpath:app.pub
   private-key: classpath:app.key
-  secret: classpath:secret.key
   access-expiry: 3600 # 1 hour
   refresh-expiry: 604800000  # 7 days
 
