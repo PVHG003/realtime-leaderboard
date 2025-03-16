@@ -1,19 +1,15 @@
 package vn.pvhg.leaderboard.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.Set;
 
 @Entity
-@Table(
-        name = "categories",
-        indexes = {
-                @Index(name = "idx_category_type", columnList = "category_type")
-        },
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uc_game_category", columnNames = {"game_id", "category_type"})
-        }
-)
-@Builder
+@Table(name = "categories")
 @Getter
 @Setter
 @AllArgsConstructor
@@ -24,15 +20,9 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "category_type", nullable = false)
-    private CategoryType categoryType;  // Stores as STRING in DB
+    private String categoryType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "game_id", nullable = false)
-    private Game game;
-
-    public enum CategoryType {
-        ANY_PERCENT, ONE_HUNDRED_PERCENT
-    }
+    @ManyToMany(mappedBy = "categories", fetch = FetchType.LAZY)
+    private Set<Game> game;
 }
