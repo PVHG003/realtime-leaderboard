@@ -5,7 +5,6 @@ import org.springframework.stereotype.Repository;
 import vn.pvhg.leaderboard.model.Role;
 
 import java.util.Optional;
-import java.util.Set;
 
 @Repository
 public interface RoleRepo extends JpaRepository<Role, Integer> {
