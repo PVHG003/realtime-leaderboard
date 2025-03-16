@@ -15,6 +15,7 @@ import vn.pvhg.leaderboard.repo.UserRepo;
 import vn.pvhg.leaderboard.util.JwtUtil;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -37,15 +38,18 @@ public class AuthService {
 
     public AuthResponse register(RegistrationRequest request) {
         if (userRepo.existsByUsername(request.username())) {
-            throw new RuntimeException("Username " + request.username() + " is already in use");
+            throw new RuntimeException("Username is already in use");
         }
 
         if (userRepo.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email '" + request.email() + "' is already in use.");
+            throw new IllegalArgumentException("Email is already in use.");
         }
 
-        Role role = roleRepo.findByRoleName(Role.RoleType.USER).orElseThrow(
-                () -> new RuntimeException("Role " + Role.RoleType.USER + " does not exist")
+        Role role = roleRepo.findByRoleName(
+                Optional.ofNullable(request.role())
+                        .orElse(Role.RoleType.USER)
+        ).orElseThrow(
+                () -> new RuntimeException("Specified role does not exist")
         );
 
         User user = User.builder()
