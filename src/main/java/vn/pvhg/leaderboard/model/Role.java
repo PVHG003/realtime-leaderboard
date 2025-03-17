@@ -16,7 +16,7 @@ import java.io.Serializable;
 public class Role implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     @Enumerated(EnumType.STRING)
     @Column(unique = true, nullable = false)

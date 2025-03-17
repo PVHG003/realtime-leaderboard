@@ -1,7 +1,7 @@
 package vn.pvhg.leaderboard.dto.response;
 
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 public record GameResponse(
@@ -9,8 +9,8 @@ public record GameResponse(
         String name,
         String description,
         String coverImageUrl,
-        Set<String> platforms,
-        Set<String> categories,
+        List<String> platforms,
+        List<String> categories,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

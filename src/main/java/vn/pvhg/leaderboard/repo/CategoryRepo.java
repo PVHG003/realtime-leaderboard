@@ -6,7 +6,7 @@ import vn.pvhg.leaderboard.model.Category;
 import java.util.List;
 import java.util.Optional;
 
-public interface CategoryRepo extends JpaRepository<Category, Integer> {
+public interface CategoryRepo extends JpaRepository<Category, Long> {
 
     Optional<Category> findByCategoryType(String categoryType);
 

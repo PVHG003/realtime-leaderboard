@@ -37,15 +37,15 @@ public class Score {
 
     private LocalDateTime verifiedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne()
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
+    @ManyToOne()
+    @JoinColumn(name = "game_category_id", nullable = false)
+    private GameCategory gameCategory;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne()
     @JoinColumn(name = "moderator_id")
     private User moderator;
 

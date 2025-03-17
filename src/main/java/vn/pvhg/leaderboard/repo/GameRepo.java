@@ -15,9 +15,10 @@ public interface GameRepo extends JpaRepository<Game, UUID> {
     boolean existsByNameIgnoreCase(String name);
 
     @Query("""
-            SELECT game FROM Game game
-            JOIN game.categories game_categories
-            WHERE game_categories.categoryType = :categoryType
+            SELECT g FROM Game g
+            JOIN g.gameCategories gc
+            JOIN gc.category c
+            WHERE c.categoryType = :categoryType
             """)
     List<Game> findGameByCategory(@Param("categoryType") String category, Pageable pageable);
 }

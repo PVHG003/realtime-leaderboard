@@ -10,12 +10,8 @@ import org.springframework.stereotype.Service;
 import vn.pvhg.leaderboard.dto.request.GameRequest;
 import vn.pvhg.leaderboard.dto.response.GameResponse;
 import vn.pvhg.leaderboard.mapper.GameMapper;
-import vn.pvhg.leaderboard.model.Category;
-import vn.pvhg.leaderboard.model.Game;
-import vn.pvhg.leaderboard.model.Platform;
-import vn.pvhg.leaderboard.repo.CategoryRepo;
-import vn.pvhg.leaderboard.repo.GameRepo;
-import vn.pvhg.leaderboard.repo.PlatformRepo;
+import vn.pvhg.leaderboard.model.*;
+import vn.pvhg.leaderboard.repo.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,37 +26,61 @@ public class GameService {
     private final CategoryRepo categoryRepo;
     private final PlatformRepo platformRepo;
     private final GameMapper gameMapper;
+    private final GameCategoryRepo gameCategoryRepo;
+    private final GamePlatformRepo gamePlatformRepo;
 
-    public GameService(GameRepo gameRepo, CategoryRepo categoryRepo, PlatformRepo platformRepo, GameMapper gameMapper) {
+    public GameService(GameRepo gameRepo, CategoryRepo categoryRepo, PlatformRepo platformRepo, GameMapper gameMapper, GameCategoryRepo gameCategoryRepo, GamePlatformRepo gamePlatformRepo) {
         this.gameRepo = gameRepo;
         this.categoryRepo = categoryRepo;
         this.platformRepo = platformRepo;
         this.gameMapper = gameMapper;
+        this.gameCategoryRepo = gameCategoryRepo;
+        this.gamePlatformRepo = gamePlatformRepo;
     }
 
     public GameResponse createGame(GameRequest request) {
-        log.debug("Creating new game");
         if (gameRepo.existsByNameIgnoreCase(request.name())) {
             throw new RuntimeException("Game name already exists");
         }
 
         List<Platform> platforms = new ArrayList<>(platformRepo.findByPlatformTypeIn(request.platforms()));
-
-        log.debug("Queried Platforms: {}", platforms);
-
         List<Category> categories = new ArrayList<>(categoryRepo.findByCategoryTypeIn(request.categories()));
 
-        log.debug("Queried Categories: {}", categories);
-
-        Game game = Game.builder()
+        Game savedGame = gameRepo.save(Game.builder()
                 .name(request.name())
                 .description(request.description())
                 .coverImageUrl(request.coverImageUrl())
-                .platforms(platforms)
-                .categories(categories)
-                .build();
+                .gameCategories(new ArrayList<>())
+                .gamePlatforms(new ArrayList<>())
+                .build());
 
-        return gameMapper.objectToDto(gameRepo.save(game));
+        List<GameCategory> gameCategories = categories.stream()
+                .map(category -> GameCategory.builder()
+                        .game(savedGame)
+                        .category(category)
+                        .build())
+                .toList();
+        gameCategoryRepo.saveAll(gameCategories);
+
+        List<GamePlatform> gamePlatforms = platforms.stream()
+                .map(platform -> GamePlatform.builder()
+                        .game(savedGame)
+                        .platform(platform)
+                        .build())
+                .toList();
+        gamePlatformRepo.saveAll(gamePlatforms);
+
+        savedGame.getGameCategories().addAll(gameCategories);
+        savedGame.getGamePlatforms().addAll(gamePlatforms);
+
+        log.debug("Creating new game");
+        log.debug("Request: {}", request);
+        log.debug("Created game");
+        log.debug("Game: {}", savedGame.toString());
+        log.debug("Platforms: {}", platforms.stream().map(Platform::getPlatformType).toList());
+        log.debug("Categories: {}", categories.stream().map(Category::getCategoryType).toList());
+
+        return gameMapper.objectToDto(gameRepo.save(savedGame));
     }
 
     public GameResponse updateGame(UUID id, Map<String, Object> request) {
@@ -85,12 +105,30 @@ public class GameService {
                 case "platforms":
                     List<String> platformTypes = (List<String>) value;
                     List<Platform> platforms = platformRepo.findByPlatformTypeIn(platformTypes);
-                    game.setPlatforms(platforms);
+
+                    game.getGamePlatforms().clear();
+
+                    List<GamePlatform> gamePlatforms = platforms.stream()
+                            .map(platform -> GamePlatform.builder()
+                                    .game(game)
+                                    .platform(platform)
+                                    .build())
+                            .toList();
+                    game.getGamePlatforms().addAll(gamePlatforms);
                     break;
                 case "categories":
                     List<String> categoryTypes = (List<String>) value;
                     List<Category> categories = categoryRepo.findByCategoryTypeIn(categoryTypes);
-                    game.setCategories(categories);
+
+                    game.getGameCategories().clear();
+
+                    List<GameCategory> gameCategories = categories.stream()
+                            .map(category -> GameCategory.builder()
+                                    .game(game)
+                                    .category(category)
+                                    .build())
+                            .toList();
+                    game.getGameCategories().addAll(gameCategories);
                     break;
                 default:
                     throw new IllegalArgumentException("Invalid field: " + key);
@@ -101,8 +139,12 @@ public class GameService {
     }
 
 
-    public void deleteGame(UUID id) {
-        gameRepo.deleteById(id);
+    public boolean deleteGame(UUID id) {
+        if (gameRepo.existsById(id)) {
+            gameRepo.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
     public List<GameResponse> getAllGames(int page, int size, String sortBy, String sortDirection) {
