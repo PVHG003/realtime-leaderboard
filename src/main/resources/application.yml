@@ -34,7 +34,7 @@ spring:
 jwt:
   public-key: classpath:app.pub
   private-key: classpath:app.key
-  access-expiry: 3600 # 1 hour
+  access-expiry: 3600000  # 1 hour
   refresh-expiry: 604800000  # 7 days
 
 

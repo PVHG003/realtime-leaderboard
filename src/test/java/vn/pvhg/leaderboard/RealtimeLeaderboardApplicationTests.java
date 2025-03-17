@@ -9,5 +9,4 @@ class RealtimeLeaderboardApplicationTests {
     @Test
     void contextLoads() {
     }
-
 }
